@@ -1,0 +1,41 @@
+name: Sync fork with upstream
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # daily at 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add upstream + fetch
+        run: |
+          git remote add upstream https://github.com/Bijeet-D/bijeet-edu.github.io.git
+          git fetch upstream
+
+      - name: Create sync branch
+        run: |
+          git checkout -B sync-upstream upstream/main
+
+      - name: Push sync branch
+        run: |
+          git push -f origin sync-upstream
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: sync-upstream
+          base: main
+          title: "Sync: upstream → fork"
+          body: "Automated sync with upstream repository."
